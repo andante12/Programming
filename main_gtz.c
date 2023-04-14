@@ -15,8 +15,6 @@
 #include <math.h>
 #include "gtz.h"
 
-#include <xdc/runtime/Log.h>
-#include <xdc/runtime/Diags.h>
 
 
 void clk_SWI_Generate_DTMF(UArg arg0);
@@ -96,46 +94,42 @@ void clk_SWI_GTZ_0697Hz(UArg arg0)
    	short input, coef_1;
 
    	// Increment the sample count
-   	N++;
+   	//N++;
 
    	// Get the input sample
    	input = (short)sample;
-    input = input >>4;
+    //input = input <<1;
    	// Get the Goertzel coefficient for the first frequency (697 Hz)
    	coef_1 = coef[0];
 
    	// Calculate the Goertzel algorithm
-   	prod1 = ((int)input * coef_1) >> 15;
-   	prod2 = (int)delay_1 * coef_1;
-   	prod3 = (int)delay_2;
-   	delay = (short)(prod1 + prod2 - prod3);
+   	prod1 = (delay_1*coef_1)>>14;
+   	delay = input + (short)prod1 - delay_2;
 
    	// Update the delay values
    	delay_2 = delay_1;
    	delay_1 = delay;
-
+    N++;
    	// Check if the required number of samples (N) have been processed
-   	if (N == 205)
+   	if (N==206)
    	{
-     		// Calculate the Goertzel value
-     		Goertzel_Value = (int)delay_1 * delay_1 + (int)delay_2 * delay_2 - ((int)delay_1 * delay_2 * coef_1 >> 15);
-     		// Store the Goertzel value in the output array
-     		gtz_out[0] = Goertzel_Value;
-
-     		// Print out the Goertzel value
-     		Log_info1("Goertzel Value for 697 Hz: %d", Goertzel_Value);
-
-
-     		// Reset the delay values and sample count
-     		delay_1 = 0;
-     		delay_2 = 0;
-     		N = 0;
+   	   prod1 = (delay_1 * delay_1);
+   	   prod2 = (delay_2 * delay_2);
+   	   prod3 = (delay_1 * coef_1)>>14;
+   	   prod3 = prod3 * delay_2;
+   	   Goertzel_Value = (prod1 + prod2 - prod3)>>15;
+   	   Goertzel_Value <<= 8; // Scale up value for sensitivity
+   	   gtz_out[0]=Goertzel_Value;
+   	   N = 0;
+   	   delay_1 = delay_2 = 0;
    	}
+
 }
+
 // to be completed
 
 
-    	//gtz_out[0] = Goertzel_Value;
+
 
 
 
